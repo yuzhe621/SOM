@@ -50,6 +50,9 @@ class SOM(object):
                 image_out = cv2.resize(image, (width, height))
                 image = image_out / 255
 
+            elif enhance == "none":
+                pass
+
             return image
         except Exception as e:
             print("the error of read_data is : ", e)
@@ -180,13 +183,13 @@ class SOM(object):
 
 if __name__ == '__main__':
     try:
-        path = "/home/dylanyoung/Desktop/img/6.png"
+        path = r"C:\Users\MLoong\Desktop\6.png"
 
         # init SOM
-        maskSize = (10, 5) # 为了方便进行并行计算，将MASK的边大小设置为5的倍数
-        som = SOM(path, maskSize, 1000000, 0.01, 0.05)  # 图像路径，竞争层大小，邻域半径衰减常数T1(常数越大，衰减越慢），学习率衰减截止点， 邻域半径衰减截止点
+        maskSize = (15, 15) # 为了方便进行并行计算，将MASK的边大小设置为5的倍数
+        som = SOM(path, maskSize, 100000, 0.03, 0.05)  # 图像路径，竞争层大小，邻域半径衰减常数T1(常数越大，衰减越慢），学习率衰减截止点， 邻域半径衰减截止点
         # read image
-        data = som.read_data("binary", 210, 100, (100, 100)) # 参数为：是否需要对图像进行预处理(binary/resize/binary&resize)，二值化阈值，阈值后最大值， resize大小
+        data = som.read_data("none", 210, 100, (100, 100)) # 参数为：是否需要对图像进行预处理(binary/resize/binary&resize/none)，二值化阈值，阈值后最大值， resize大小
         # init mask
         mask = som.init_mask()
         # 网络层竞争
@@ -201,7 +204,7 @@ if __name__ == '__main__':
 
         for i in range(height):
             for j in range(width):
-                cv2.circle(data, (int(result_mask[i][j][3]), int(result_mask[i][j][4])), 0.5, (0, 0, 255), 0.5)
+                cv2.circle(data, (int(result_mask[i][j][3]), int(result_mask[i][j][4])), 2, (0, 0, 255), 1)
                 mask_value[i][j][:3] = result_mask[i][j][:3]
         cv2.imshow("iamge", data)
 
