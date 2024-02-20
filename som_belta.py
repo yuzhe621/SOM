@@ -50,9 +50,6 @@ class SOM(object):
                 image_out = cv2.resize(image, (width, height))
                 image = image_out / 255
 
-            elif enhance == "none":
-                pass
-
             return image
         except Exception as e:
             print("the error of read_data is : ", e)
@@ -107,7 +104,7 @@ class SOM(object):
             x = exp(-step / t)
             lr = eta0 * x
             return lr
-        
+
         except Exception as e:
             print("the error of learning_rate is : ", e)
 
@@ -144,6 +141,10 @@ class SOM(object):
                 BMU = [99, 0 , 0]
 
                 # find the BMU
+
+                ######################
+                # 单纯使用for循环
+                ######################
                 for i in range(height):
                     for j in range(width): # 将MASK层所有节点遍历一遍
                         W = mask[i][j][:3] # 提取每个节点的系数，每个point的数据格式为[W1,W2,W3,(坐标)]，W为不同通道的像素值
@@ -155,6 +156,32 @@ class SOM(object):
                             BMU[0] = similarity # 更新目前优胜节点的相似度
                             BMU[1:3] = [i, j]
                             mask[i][j][3:5] = [y, x]
+                ######################
+                #  不使用for循环
+                ######################
+
+                mask_v = mask[:,:,:3]
+                point = np.array(extract_data)
+
+                print("@@@")
+                print(mask_v)
+                print(extract_data)
+                print("@@@")
+
+                differences = mask_v - point
+                distances = np.sqrt(np.sum(differences**2, axis=1))
+
+                # 最小距离
+                min_distance = np.min(distances)
+
+                # 最小距离的扁平化索引
+                min_distance_flat_index = np.argmin(distances)
+
+                # 将扁平化索引转化为二维索引
+                min_distance_index = np.unravel_index(min_distance_flat_index, distances.shape)
+
+                print("min_distance_index : ", min_distance_index, " | min_distance : ", min_distance, " | similarity : ", similarity)
+                print("BMU : ", BMU)
 
                 # refresh the node in BMU's neighbourhood
                 winner_point = BMU[1:3]
@@ -183,13 +210,13 @@ class SOM(object):
 
 if __name__ == '__main__':
     try:
-        path = r"C:\Users\MLoong\Desktop\6.png"
+        path = "/home/dylanyoung/Desktop/img/6.png"
 
         # init SOM
-        maskSize = (15, 15) # 为了方便进行并行计算，将MASK的边大小设置为5的倍数
-        som = SOM(path, maskSize, 100000, 0.03, 0.05)  # 图像路径，竞争层大小，邻域半径衰减常数T1(常数越大，衰减越慢），学习率衰减截止点， 邻域半径衰减截止点
+        maskSize = (2, 2) # 为了方便进行并行计算，将MASK的边大小设置为5的倍数
+        som = SOM(path, maskSize, 10000, 0.03, 0.05)  # 图像路径，竞争层大小，邻域半径衰减常数T1(常数越大，衰减越慢），学习率衰减截止点， 邻域半径衰减截止点
         # read image
-        data = som.read_data("none", 210, 100, (100, 100)) # 参数为：是否需要对图像进行预处理(binary/resize/binary&resize/none)，二值化阈值，阈值后最大值， resize大小
+        data = som.read_data("resize", 210, 100, (100, 100)) # 参数为：是否需要对图像进行预处理(binary/resize/binary&resize)，二值化阈值，阈值后最大值， resize大小
         # init mask
         mask = som.init_mask()
         # 网络层竞争
